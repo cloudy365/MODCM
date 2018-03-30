@@ -7,7 +7,7 @@ doy_leap = [1, 1, 32, 61, 92, 122, 153, 183, 214, 245, 275, 306, 336, 367]
 
 
 def run_one_year(iyr, icat):
-    data_folder = "/u/sciteam/smzyz/scratch/results/{}/{}".format(icat, iyr)
+    data_folder = "/u/sciteam/smzyz/scratch/results/MODIS_ClimateMarble_005deg/{}/{}".format(icat, iyr)
     data_files = os.listdir(data_folder)
     
     if iyr in [2000, 2004, 2008, 2012]:
@@ -38,7 +38,7 @@ def run_one_year(iyr, icat):
                 rad_all += tmp_rad
                 num_all += tmp_num
         
-        file_out = "/u/sciteam/smzyz/scratch/results/{}_{}_{}.npz".format(icat, iyr, imon)
+        file_out = "/u/sciteam/smzyz/scratch/results/MODIS_ClimateMarble_005deg/monthly/{}_{}_{}.npz".format(icat, iyr, imon)
         
         np.savez_compressed(file_out, rad_all=rad_all, num_all=num_all)
 
