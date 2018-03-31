@@ -18,7 +18,7 @@ def run_one_year(iyr, icat):
     for imon in range(1, 13):
         print iyr, imon
         
-		if icat in ['VIS', 'SWIR_P2']:
+	if icat in ['VIS', 'SWIR_P2']:
             rad_all = np.zeros((3600, 7200, 7))
             num_all = np.zeros((3600, 7200, 7))
         else:
