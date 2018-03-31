@@ -7,7 +7,7 @@ doy_leap = [1, 1, 32, 61, 92, 122, 153, 183, 214, 245, 275, 306, 336, 367]
 
 
 def run_one_year(iyr, icat):
-    data_folder = "/u/sciteam/smzyz/scratch/results/MODIS_ClimateMarble_005deg/{}/{}".format(icat, iyr)
+    data_folder = "/u/sciteam/smzyz/scratch/results/MODIS_ClimateMarble_005deg/daily/{}/{}".format(icat, iyr)
     data_files = os.listdir(data_folder)
     
     if iyr in [2000, 2004, 2008, 2012]:
@@ -18,8 +18,12 @@ def run_one_year(iyr, icat):
     for imon in range(1, 13):
         print iyr, imon
         
-        rad_all = np.zeros((3600, 7200, 8))
-        num_all = np.zeros((3600, 7200, 8))
+		if icat in ['VIS', 'SWIR_P2']:
+            rad_all = np.zeros((3600, 7200, 7))
+            num_all = np.zeros((3600, 7200, 7))
+        else:
+            rad_all = np.zeros((3600, 7200, 8))
+            num_all = np.zeros((3600, 7200, 8))
         
         doy_0 = doy[imon]
         doy_1 = doy[imon+1]
