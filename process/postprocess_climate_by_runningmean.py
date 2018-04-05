@@ -142,7 +142,7 @@ if __name__ == '__main__':
     
     import mpi4py.MPI as MPI
     
-    comm = MPI.COMM_WORLD()
+    comm = MPI.COMM_WORLD
     comm_rank = comm.Get_rank()
     
     # days_all = range(1, 367)
