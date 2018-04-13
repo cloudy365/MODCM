@@ -91,8 +91,8 @@ if __name__ == '__main__':
     
     NUM_CORES = int(sys.argv[1])
     NUM_WINDOW = int(sys.argv[2])
-    BANDs = [1, 4, 3, 6] #sys.argv[3:]
-    
+    BANDs = [2, 22, 27, 28, 29, 30, 31, 32]#[1, 4, 3, 6] #sys.argv[3:]
+
     import mpi4py.MPI as MPI
     
     comm = MPI.COMM_WORLD
@@ -101,10 +101,10 @@ if __name__ == '__main__':
     for iband in BANDs:
         for i in range(0, 366, NUM_CORES):
             iday = comm_rank + i
-			try:
+            try:
                 main_process_one_time(iband, iday, NUM_WINDOW)
             except Exception as err:
                 print ">> I'm PE: {}, I have a problem: {}".format(comm_rank, err)
-				continue
+                continue
     print ">> I'm PE: {}, I have finished my job..".format(comm_rank)
         
