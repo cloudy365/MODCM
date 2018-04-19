@@ -30,7 +30,10 @@ def get_fname_bandindex(iband):
     elif iband in LW_P2:
         ifile = "LW_P2_{}.npz"
         iband_idx = np.where(iband==LW_P2)[0][0]
-    
+    elif iband.startswith('S'):
+        ifile = "SOLAR_{}.npz"
+        iband_idx = np.where(iband[1:]==VIS)[0][0]
+        
     return ifile, iband_idx
 
       
@@ -80,8 +83,8 @@ def main_process_one_time(iband, iday, num_window):
         data = np.load(data_path)['mean_rad'][:, :, band_idx]
         sum_moving = np.nansum([sum_moving, data], axis=0)
 
-    avg_moving = np.nan_to_num(sum_moving / iday)
-    np.savez("/u/sciteam/smzyz/scratch/results/MODIS_ClimateMarble_005deg/moving_average/b{}_{}".format(iband, iday), avg_moving=avg_moving)
+    avg_moving = np.nan_to_num(sum_moving / num_window)
+    np.savez("/u/sciteam/smzyz/scratch/results/MODIS_ClimateMarble_005deg/moving_average/31days/s{}_{}".format(iband, iday), avg_moving=avg_moving)
 
     
 if __name__ == '__main__':
@@ -91,7 +94,8 @@ if __name__ == '__main__':
     
     NUM_CORES = int(sys.argv[1])
     NUM_WINDOW = int(sys.argv[2])
-    BANDs = [2, 22, 27, 28, 29, 30, 31, 32]#[1, 4, 3, 6] #sys.argv[3:]
+    BANDs = [1, 2, 3, 4, 6, 22, 27, 28, 29, 30, 31, 32]
+    BANDs = ['S1', 'S2', 'S3', 'S4', 'S6']
 
     import mpi4py.MPI as MPI
     

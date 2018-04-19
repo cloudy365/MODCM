@@ -5,7 +5,7 @@ These helper functions are from zyz_data with some modifications.
 """
 
 
-from zyz_core import np, SD, plt, os, time, tqdm
+from my_module import np, SD, plt, os, time, tqdm, sys
 
 
 
@@ -38,6 +38,38 @@ def MOD02_retrieve_field(mod02_file, ifld):
     mfile = SD(mod02_file)
     mdata = mfile.select(ifld)
     return mdata[:]
+
+
+def MOD02_retrieve_solar(mod02_file, icat=1):
+    """
+    Retrieve MODIS021KM normal insolation for VIS 1--7 bands.
+    """
+
+    szas = MOD02_retrieve_field(mod02_file, 'SolarZenith')/100.
+    cosine_szas = np.cos(np.deg2rad(szas))
+    
+    mfile = SD(mod02_file)
+
+    solar_array = []
+    if icat == 1:
+        # Bands 1, 2
+        mdata = mfile.select('EV_250_Aggr1km_RefSB')
+        rad_scales = mdata.attributes()['radiance_scales']
+        ref_scales = mdata.attributes()['reflectance_scales']
+    
+        for i in range(2):
+            solar_array.append( cosine_szas*rad_scales[i]/ref_scales[i] )
+        
+        # Bands 3 -- 7
+        mdata = mfile.select('EV_500_Aggr1km_RefSB')
+        rad_scales = mdata.attributes()['radiance_scales']
+        ref_scales = mdata.attributes()['reflectance_scales']
+
+        for i in range(5):
+            solar_array.append( cosine_szas*rad_scales[i]/ref_scales[i] )
+    
+    solar_array = np.rollaxis(np.array(solar_array), 0, 3)
+    return solar_array
 
 
 def MOD02_retrieve_radiance_all(mod02_file, icat):

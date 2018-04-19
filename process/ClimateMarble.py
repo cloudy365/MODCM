@@ -7,8 +7,8 @@
 
 
 # Import
-from helper_func_0318 import *
-import sys
+from helper_func import *
+
 
 
 SPATIAL_RESOULITON = 0.05
@@ -18,6 +18,7 @@ NUM_LATS = int(180/SPATIAL_RESOULITON)
 NUM_LONS = int(360/SPATIAL_RESOULITON)
 NUM_CHAN = 7 # 15 # 16
 CATEGORY = 1 # 2 # 3
+
 
 
 def main_process_single_MOD02file(mod_file_dir):
@@ -121,6 +122,7 @@ if __name__ == '__main__':
 
     days_all = np.load("process_days.npz")['folders'][:]
 
+    
     for ibatch in range(0, len(days_all), NUM_CORES):
         
         if comm_rank == 0:

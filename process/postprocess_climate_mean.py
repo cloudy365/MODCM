@@ -1,6 +1,6 @@
 
 
-from zyz_core import np, os, Dataset
+from my_module import np, os, Dataset
 
 
 
@@ -8,7 +8,6 @@ from zyz_core import np, os, Dataset
 
 
 
-#if __name__ == '__main__':
 def climate_marble_monthly_mean():
     working_dir = "/u/sciteam/smzyz/scratch/results/MODIS_ClimateMarble_005deg/monthly/"
     output_dir = "/u/sciteam/smzyz/"
@@ -28,7 +27,7 @@ def climate_marble_monthly_mean():
             for iyr in range(2000, 2016):
                 ifile = "{}_{}_{}.npz".format(icat, iyr, imon)
                 inpz = np.load(os.path.join(working_dir, ifile))
-
+                
                 rad_all += inpz['rad_all']
                 num_all += inpz['num_all']
         
@@ -110,7 +109,7 @@ def climate_marble_daily_mean(icat, iday):
     # iterating each month and collect available monthly mean results of the specified category.
     # for iday in tqdm(range(1, 367), miniters=1):
 
-    if icat in ['VIS', 'SWIR_P2']:
+    if icat in ['VIS', 'SWIR_P2', 'SOLAR']:
         rad_all = np.zeros((3600, 7200, 7))
         num_all = np.zeros((3600, 7200, 7))
     else:
@@ -121,11 +120,15 @@ def climate_marble_daily_mean(icat, iday):
         ifile = "{}.{}.npz".format(iyr, str(iday).zfill(3))
         try:
             inpz = np.load(os.path.join(working_dir+"{}/{}".format(icat, iyr), ifile))
-
-            rad_all += inpz['rad_sum']
-            num_all += inpz['rad_num']
+            
+            if icat == 'SOLAR':
+                rad_all += inpz['solar_sum']
+                num_all += inpz['solar_num']
+            else:
+                rad_all += inpz['rad_sum']
+                num_all += inpz['rad_num']
         except Exception as err:
-            print "Error: {}".format(err)
+            print ">> Error: {}".format(err)
 
     mean_rad = np.array(rad_all / num_all)
 
@@ -147,8 +150,9 @@ if __name__ == '__main__':
     
     # days_all = range(1, 367)
     iday = comm_rank + 1
-    for icat in CATS:
-        climate_marble_daily_mean(icat, iday)
-    
-    print ">> I'm PE: {}, and I have finished my job: day_{}.".format(comm_rank, iday)
+    #for icat in CATS:
+    #    climate_marble_daily_mean(icat, iday)
+    climate_marble_daily_mean('SOLAR', iday)
+
+    print ">> PE: {}, and I have finished my job: day_{}.".format(comm_rank, iday)
         
