@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
-
-"""
-These helper functions are from zyz_data with some modifications.
-"""
+#
+# These helper functions are originally from zyz_data with some modifications.
+# Used by ClimateMarble.py to conduct the main process.
+#
+# Last update: 2018.04.26
+# All Rights Reserved.
 
 
 from my_module import np, SD, plt, os, time, tqdm, sys
@@ -11,8 +13,13 @@ from my_module import np, SD, plt, os, time, tqdm, sys
 
 def latlon_to_idx(lat_int, lat_decimal, lon_int, lon_decimal, num):
     """
-    num: 1/resolution
+    Key function that determines the lat/lon indexes for a given resolution map based on the integer and decimals of lats and lons. 
+    
+    Current version only works on the single sample. Maybe update in the future (>.<).
+    
+    num: 1/resolution.
     """
+
     # Latitude part
     if lat_int + lat_decimal < 0:
         idx_lat = (90 - lat_int) * num - int(lat_decimal * num)
@@ -33,7 +40,11 @@ def latlon_to_idx(lat_int, lat_decimal, lon_int, lon_decimal, num):
 
 
 def MOD02_retrieve_field(mod02_file, ifld):
-    # retrieve a specified field from MOD021KM product
+    """
+    Retrieve a specified field from MOD021KM data file.
+
+    Currently used for retrieving 'Latitude', 'Longitude', and 'SolarZenith'. 
+    """
 
     mfile = SD(mod02_file)
     mdata = mfile.select(ifld)
@@ -43,13 +54,15 @@ def MOD02_retrieve_field(mod02_file, ifld):
 def MOD02_retrieve_solar(mod02_file, icat=1):
     """
     Retrieve MODIS021KM normal insolation for VIS 1--7 bands.
+    Store valid spectral insolation when SZA < 90.
     """
 
     szas = MOD02_retrieve_field(mod02_file, 'SolarZenith')/100.
     cosine_szas = np.cos(np.deg2rad(szas))
-    
-    mfile = SD(mod02_file)
+    np.place(cosine_szas, szas>=90, 0)
 
+
+    mfile = SD(mod02_file)
     solar_array = []
     if icat == 1:
         # Bands 1, 2
@@ -60,38 +73,41 @@ def MOD02_retrieve_solar(mod02_file, icat=1):
         for i in range(2):
             solar_array.append( cosine_szas*rad_scales[i]/ref_scales[i] )
         
-        # Bands 3 -- 7
+        # Bands 3--7
         mdata = mfile.select('EV_500_Aggr1km_RefSB')
         rad_scales = mdata.attributes()['radiance_scales']
         ref_scales = mdata.attributes()['reflectance_scales']
 
         for i in range(5):
             solar_array.append( cosine_szas*rad_scales[i]/ref_scales[i] )
-    
-    solar_array = np.rollaxis(np.array(solar_array), 0, 3)
+
+    # Put the dimension of channel last
+    solar_array = np.array(solar_array)
+    solar_array = np.rollaxis(solar_array, 0, 3)
     return solar_array
 
 
-def MOD02_retrieve_radiance_all(mod02_file, icat):
-    # retrieve MODIS021KM radiances from all 36 channels
+def MOD02_retrieve_rads(mod02_file, icat):
+    """
+    Retrieve MODIS021KM radiances for a specified category.
+    """
+
     mod_array = []
     max_value = []
     
     mfile = SD(mod02_file)
     
     if icat == 1:
-        # Bands 1, 2
+        # Bands 1--2, 3--7
         mdata = mfile.select('EV_250_Aggr1km_RefSB')
         scales = mdata.attributes()['radiance_scales']
         offset = mdata.attributes()['radiance_offsets']
         tt = mdata.get()
-    
+
         for i in range(2):
             mod_array.append( (tt[i] - offset[i]) * scales[i] )
             max_value.append( (32767 - offset[i]) * scales[i] )
         
-    
-        # Bands 3 -- 7
         mdata = mfile.select('EV_500_Aggr1km_RefSB')
         scales = mdata.attributes()['radiance_scales']
         offset = mdata.attributes()['radiance_offsets']
@@ -101,9 +117,9 @@ def MOD02_retrieve_radiance_all(mod02_file, icat):
             mod_array.append( (tt[i] - offset[i]) * scales[i] )
             max_value.append( (32767 - offset[i]) * scales[i] )
 
-    
+
     if icat == 2:
-        # Bands 8 -- 15
+        # Bands 8--13, 13.5, 14
         mdata = mfile.select('EV_1KM_RefSB')
         scales = mdata.attributes()['radiance_scales']
         offset = mdata.attributes()['radiance_offsets']
@@ -115,7 +131,7 @@ def MOD02_retrieve_radiance_all(mod02_file, icat):
         
     
     if icat == 3:
-        # Bands 16 -- 19, 26
+        # Bands 14.5, 15--19, 26
         mdata = mfile.select('EV_1KM_RefSB')
         scales = mdata.attributes()['radiance_scales']
         offset = mdata.attributes()['radiance_offsets']
@@ -127,7 +143,7 @@ def MOD02_retrieve_radiance_all(mod02_file, icat):
 
 
     if icat == 4:
-        # LW part 1
+        # Bands 20--25, 27, 28
         mdata = mfile.select('EV_1KM_Emissive')
         rad_scales = mdata.attributes()['radiance_scales']
         rad_offset = mdata.attributes()['radiance_offsets']
@@ -139,7 +155,7 @@ def MOD02_retrieve_radiance_all(mod02_file, icat):
     
 
     if icat == 5:
-        # LW part 2
+        # Bands 29--36
         mdata = mfile.select('EV_1KM_Emissive')
         rad_scales = mdata.attributes()['radiance_scales']
         rad_offset = mdata.attributes()['radiance_offsets']
@@ -150,36 +166,37 @@ def MOD02_retrieve_radiance_all(mod02_file, icat):
             max_value.append( (32767 - rad_offset[i]) * rad_scales[i] )
 
 
+    # Put the dimension of channel last
     mod_array = np.rollaxis(np.array(mod_array), 0, 3)
     return mod_array, max_value
   
     
     
-if __name__ == "__main__":
-    import sys
-
-    yrs = sys.argv[1:]
-    
-    for iyr in yrs:
-        data_folder = "/u/sciteam/smzyz/scratch/results/VIS/{}".format(iyr)
-    
-        rad_all = np.zeros((3600, 7200, 7))
-        num_all = np.zeros((3600, 7200, 7))
-    
-        files = os.listdir(data_folder)
-        length = len(files)
-    
-        for i in tqdm(range(length), miniters=10):
-            ifile = files[i]
-        
-            if ifile.endswith('.npz') == False:
-                continue
-        
-            fnpz = np.load(os.path.join(data_folder, ifile))
-            tmp_rad = fnpz['rad_sum'][:]
-            tmp_num = fnpz['rad_num'][:]
-        
-            rad_all += tmp_rad
-            num_all += tmp_num
-
-        np.savez(iyr, rad_all=rad_all, num_all=num_all)
+#if __name__ == "__main__":
+#    import sys
+#
+#    yrs = sys.argv[1:]
+#    
+#    for iyr in yrs:
+#        data_folder = "/u/sciteam/smzyz/scratch/results/VIS/{}".format(iyr)
+#    
+#        rad_all = np.zeros((3600, 7200, 7))
+#        num_all = np.zeros((3600, 7200, 7))
+#    
+#        files = os.listdir(data_folder)
+#        length = len(files)
+#    
+#        for i in tqdm(range(length), miniters=10):
+#            ifile = files[i]
+#        
+#            if ifile.endswith('.npz') == False:
+#                continue
+#        
+#            fnpz = np.load(os.path.join(data_folder, ifile))
+#            tmp_rad = fnpz['rad_sum'][:]
+#            tmp_num = fnpz['rad_num'][:]
+#        
+#            rad_all += tmp_rad
+#            num_all += tmp_num
+#
+#        np.savez(iyr, rad_all=rad_all, num_all=num_all)

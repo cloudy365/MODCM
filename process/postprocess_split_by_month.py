@@ -1,4 +1,4 @@
-from zyz_core import np, os, tqdm
+from my_module import np, os, tqdm
 import sys
 
 
@@ -18,7 +18,7 @@ def run_one_year(iyr, icat):
     for imon in range(1, 13):
         print iyr, imon
         
-        if icat in ['VIS', 'SWIR_P2']:
+        if icat in ['VIS', 'SWIR_P2', 'SOLAR']:
             rad_all = np.zeros((3600, 7200, 7))
             num_all = np.zeros((3600, 7200, 7))
         else:
@@ -34,10 +34,13 @@ def run_one_year(iyr, icat):
             if iday in range(doy_0, doy_1):
                 ifile_path = os.path.join(data_folder, ifile)
                 fnpz = np.load(ifile_path)
-#                 print ifile_path
-                
-                tmp_rad = fnpz['rad_sum'][:]
-                tmp_num = fnpz['rad_num'][:]
+
+                if icat == 'SOLAR':
+                    tmp_rad = fnpz['solar_sum'][:]
+                    tmp_num = fnpz['solar_num'][:]
+                else:
+                    tmp_rad = fnpz['rad_sum'][:]
+                    tmp_num = fnpz['rad_num'][:]
                 
                 rad_all += tmp_rad
                 num_all += tmp_num

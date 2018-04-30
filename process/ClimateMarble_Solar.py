@@ -137,18 +137,3 @@ if __name__ == '__main__':
     print ">> PE: {}, has finished.".format(comm_rank)
         
         
-#         if comm_rank == 0:
-#             days_batch = range(ibatch, ibatch+NUM_CORES)
-#         day = comm.scatter(days_batch if comm_rank == 0 else None, root=0)
-        
-        
-#         try:
-#             print ">> Batch: {}, processing {}...".format(ibatch, day)
-#             main_process_one_day(days_all[day])
-#         except Exception as e:
-#             print ">>>> Fail of {}.{}: {}".format(ibatch, day, e)
-
-
-#     if comm_rank == 0:
-#         print ">> done."
-
