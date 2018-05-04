@@ -1,5 +1,12 @@
 
 
+
+from my_module import np, h5py, os, sys
+from my_module.data.comm import save_data_hdf5
+from helper_func import latlon_to_idx
+
+
+
 """
 2018.04.30
 This is a new version MODIS climate marble, which sorts each 1-km sample into lat/lon bins. 
@@ -33,12 +40,6 @@ I showed path of organized MOD02, MOD03 data in the following,
 MOD021KM: /u/sciteam/smzyz/scratch/data/MODIS/MOD021KM_daily
 MOD03:    /u/sciteam/smzyz/scratch/data/MODIS/MOD03_daily
 """
-
-
-
-from my_module import np, h5py, plt, os
-from my_module.data.comm import save_data_hdf5
-
 
 
 def times_gen():
@@ -84,9 +85,7 @@ def main_process_one_day(mod02_file, mod03_file, output_folder):
     daily_radiance_num = np.zeros((NUM_LATS, NUM_LONS, NUM_CHAN))
     daily_h5f_out = os.path.join(output_folder, '{}.h5'.format(mod_date))
     
-    print ">> Process MODIS {}".format(mod_date)
-    
-    
+
     """
     Main loop: the following part sorts the radiances into the corresponding lat/lon bins
     """
@@ -100,16 +99,16 @@ def main_process_one_day(mod02_file, mod03_file, output_folder):
             sza = mod03['{}/SolarZenith'.format(itime)][:, :]/100.
             vza = mod03['{}/SensorZenith'.format(itime)][:, :]/100.
         except KeyError as err:
-            # print ">> {}.{} has a KeyError".format(mod_date, itime)
+            #print ">> {}.{} has a KeyError".format(mod_date, itime)
             continue
             
         valid_y, valid_x = np.where((sza>=0)&(sza<90.0)&(vza>=0)&(vza<VZA_MAX))
         valid_num = len(valid_x)
         if valid_num == 0:
-            print ">> log: {}.{} has no valid sample".format(mod_date, itime)
+            #print ">> log: {}.{} has no valid sample".format(mod_date, itime)
             continue
-        else:
-            print ">> log: {}.{} has {} valid samples fit into geometry criterion".format(mod_date, itime, valid_num)
+        #else:
+            #print ">> log: {}.{} has {} valid samples fit into geometry criterion".format(mod_date, itime, valid_num)
         
         
         # 2ND PIXEL-LEVEL CHECK:
@@ -211,21 +210,22 @@ if __name__ == '__main__':
     comm = MPI.COMM_WORLD
     comm_rank = comm.Get_rank()
     
-    output_folder = '/u/sciteam/smzyz/scratch/results'
+    output_folder = '/u/sciteam/smzyz/scratch/results/tmp'
     
     for iyr in range(2000, 2016):
         for idd in range(1, 367, NUM_CORES):
             iday = idd + comm_rank
-            mod02_file = 'MOD021KM.A{}{}.006.h5'.format(iyr, str(idd).zfill(3))
-            mod03_file = 'MOD03.A{}{}.006.h5'.format(iyr, str(idd).zfill(3))
+            mod02_file = 'MOD021KM.A{}{}.006.h5'.format(iyr, str(iday).zfill(3))
+            mod03_file = 'MOD03.A{}{}.006.h5'.format(iyr, str(iday).zfill(3))
             
             mod02_path = '/u/sciteam/smzyz/scratch/data/MODIS/MOD021KM_daily/{}/{}'.format(iyr, mod02_file)
             mod03_path = '/u/sciteam/smzyz/scratch/data/MODIS/MOD03_daily/{}/{}'.format(iyr, mod03_file)
             
-            try:
-                main_process_one_day(mod02_path, mod03_path, output_folder)
-            except Exception as err:
-                print ">> err: {}".format(err)
+            print ">> log: PE {} -- process {}".format(comm_rank, mod02_file)
+            #try:
+            main_process_one_day(mod02_path, mod03_path, output_folder)
+            #except Exception as err:
+                #print ">> err: {}".format(err)
 
 
 
