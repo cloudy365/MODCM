@@ -39,6 +39,32 @@ def latlon_to_idx(lat_int, lat_decimal, lon_int, lon_decimal, num):
     return int(idx_lat), int(idx_lon)
 
 
+def latslons_to_idxs(lats, lons, num):
+    """
+    An updated key function that determines the lat/lon indexes for a given resolution map based on the input lats and lons.
+
+    This function is exactly the same as latlon_to_idx but working on the whole lat/lon array at the same time.
+
+    num: 1/resolution
+    """
+
+    lats_int = lats.astype('int32')
+    lons_int = lons.astype('int32')
+    lats_dec = lats - lats_int
+    lons_dec = lons - lons_int
+
+    # Latitude
+    lats_idx = (90-lats_int) * num - (lats_dec*num).astype('int32')
+    lats_idx[lats>=0] -= 1
+
+    # Longitude
+    lons_idx = (180+lons_int) * num + (lons_dec*num).astype('int32')
+    lons_idx[lons<0] -= 1
+    np.place(lons_idx, lons_idx==360*num, 0)
+
+    return lats_idx, lons_idx
+
+
 def MOD02_retrieve_field(mod02_file, ifld):
     """
     Retrieve a specified field from MOD021KM data file.
