@@ -218,7 +218,7 @@ if __name__ == '__main__':
             mod02_file = 'MOD021KM.A{}{}.006.h5'.format(iyr, str(iday).zfill(3))
             mod03_file = 'MOD03.A{}{}.006.h5'.format(iyr, str(iday).zfill(3))
             
-            mod02_path = '/u/sciteam/smzyz/scratch/data/MODIS/MOD021KM_daily/{}/{}'.format(iyr, mod02_file)
+            mod02_path = '/u/sciteam/smzyz/scratch/data/MODIS/MOD02_VIS_daily/{}/{}'.format(iyr, mod02_file)
             mod03_path = '/u/sciteam/smzyz/scratch/data/MODIS/MOD03_daily/{}/{}'.format(iyr, mod03_file)
             
             print ">> log: PE {} -- process {}".format(comm_rank, mod02_file)
