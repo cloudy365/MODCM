@@ -54,8 +54,8 @@ def main(mod02, mod03, output_folder):
         mod02 = h5py.File(mod02, 'r')
         mod03 = h5py.File(mod03, 'r')
     except IOError as err:
-        print ">> {} has a IOError, program terminated.".format(mod_date)
-
+        print ">> IOError, cannot access {}".format(mod_date)
+        return
 
     # Initialize output arrays and output hdf5 file
     daily_insolation_sum = np.zeros((NUM_LATS, NUM_LONS, NUM_CHAN))
@@ -70,13 +70,14 @@ def main(mod02, mod03, output_folder):
     # The following part sorts the radiances into the corresponding lat/lon bins
     times = times_gen(2)[:]
 #     for i in tqdm(range(len(times))):
-    for i in range(len(times))):
+    for i in range(len(times)):
         itime = times[i]
 
         try:
             sza = mod03['{}/SolarZenith'.format(itime)][:, :]/100.
             vza = mod03['{}/SensorZenith'.format(itime)][:, :]/100.
         except KeyError as err:
+            print ">> KeyError, cannot access {}.{}".format(mod_date, itime)
             continue
 
         # GRANULE-LEVEL CHECK is applied here,
@@ -165,4 +166,14 @@ if __name__ == '__main__':
     
     times = times_gen(1)[:]
     for idd in range(0, len(times), NUM_CORES):
-        print idd + comm_rank
+        itime = times[idd+comm_rank]
+
+        mod02_file = 'MOD021KM.A{}.006.h5'.format(itime)
+        mod03_file = 'MOD03.A{}.006.h5'.format(itime)
+        
+        mod02_path = '/u/sciteam/smzyz/scratch/data/MODIS/MOD02_VIS_daily/{}/{}'.format(itime[:4], mod02_file)
+        mod03_path = '/u/sciteam/smzyz/scratch/data/MODIS/MOD03_daily/{}/{}'.format(itime[:4], mod03_file)
+
+        print ">> log: PE {} on {}".format(comm_rank, mod02_file)
+        main(mod02_path, mod03_path, output_folder)
+
