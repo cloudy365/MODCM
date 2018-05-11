@@ -1,4 +1,4 @@
-from my_module import os, h5py, np, sys
+from my_module import os, h5py, np, sys, tqdm
 from my_module.data.comm import save_data_hdf5
 from helper_func import latslons_to_idxs
 from fort import test
@@ -13,7 +13,7 @@ def times_gen(itype):
     """
     times = []
     if itype == 1:
-        for iyr in range(2000, 2016):
+        for iyr in range(2014, 2016):
             for iday in range(1, 367):
                 tmp = "{}{}".format(iyr, str(iday).zfill(3))
                 times.append(tmp)
@@ -69,8 +69,8 @@ def main(mod02, mod03, output_folder):
     """
     # The following part sorts the radiances into the corresponding lat/lon bins
     times = times_gen(2)[:]
-#     for i in tqdm(range(len(times))):
-    for i in range(len(times)):
+    for i in tqdm(range(len(times))):
+    # for i in range(len(times)):
         itime = times[i]
 
         try:
@@ -94,11 +94,16 @@ def main(mod02, mod03, output_folder):
 
 
         # Calculate spectral radiances and insolation
-        mdata = mod02['{}/Scaled_Integers'.format(itime)][:]
-        rad_scales = mod02['{}/Radiance_Scales'.format(itime)][:]
-        rad_offset = mod02['{}/Radiance_Offsets'.format(itime)][:]
-        ref_scales = mod02['{}/Reflectance_Scales'.format(itime)][:]
-        ref_offset = mod02['{}/Reflectance_Offsets'.format(itime)][:]
+        try:
+            mdata = mod02['{}/Scaled_Integers'.format(itime)][:]
+            rad_scales = mod02['{}/Radiance_Scales'.format(itime)][:]
+            rad_offset = mod02['{}/Radiance_Offsets'.format(itime)][:]
+            ref_scales = mod02['{}/Reflectance_Scales'.format(itime)][:]
+            ref_offset = mod02['{}/Reflectance_Offsets'.format(itime)][:]
+        except KeyError as err:
+            print ">> KeyError, cannot access {}.{}".format(mod_date, itime)
+            continue
+            
         coeffs = rad_scales / ref_scales
         cosine_sza = np.cos(np.deg2rad(sza))
 
