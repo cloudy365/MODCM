@@ -114,10 +114,8 @@ def MOD35_organize(mod35_files, h5f_path):
     
         
         # Get data
-        mod35_file = os.path.join(ifolder, ifile)
-        # cld = MOD35_retrieve_cloud_mask(mod35_file)
         try:
-            mfile = SD(mod35_file)
+            mfile = SD(os.path.join(SUBDIR, ifile))
         except Exception as err:
             print ">> err: {} | {}".format(err, ifile)
             continue
