@@ -185,7 +185,11 @@ if __name__ == "__main__":
             except OSError as err:
                 print ">> err: {}".format(err)
                 continue
-            
+
+            data_files = [i for i in files if (i.endswith('.hdf')&(i.startswith('MOD')))]
+            if len(data_files) == 0:
+                continue
+
 
             # call main function
             print ">> PE:{}, organizing MODIS data on {}...".format(comm_rank, WORKING_DATE)
