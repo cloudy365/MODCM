@@ -1,4 +1,3 @@
-<<<<<<< HEAD:process/_1_daily/ClimateMarble_with_fortran.py
 
 
 # Date: 2018.05.16 -- tidy up the script
@@ -7,36 +6,12 @@
 
 
 from my_module import os, h5py, np, sys
-=======
-from my_module import os, h5py, np, sys, tqdm
->>>>>>> b4c8091d86d7f41d7c119fd37fdde3b860fdee09:process/ClimateMarble_with_fortran.py
 from my_module.data.comm import save_data_hdf5
 from helper_func import latslons_to_idxs
 from fort import sort
 
 
 
-<<<<<<< HEAD:process/_1_daily/ClimateMarble_with_fortran.py
-=======
-def times_gen(itype):
-    """
-    Generate times for processing, itype could be 1 or 2.
-    itype == 1: Generate iyr+iday for MPI processing;
-    itype == 2: Generate ihr+imin for granule processing, which calls once at the very begining of the Main function.
-    """
-    times = []
-    if itype == 1:
-        for iyr in range(2014, 2016):
-            for iday in range(1, 367):
-                tmp = "{}{}".format(iyr, str(iday).zfill(3))
-                times.append(tmp)
-                
-    elif itype == 2:
-        for ihr in range(24):
-            for imin in range(0, 60, 5):
-                tmp = "{}{}".format(str(ihr).zfill(2), str(imin).zfill(2))
-                times.append(tmp)
->>>>>>> b4c8091d86d7f41d7c119fd37fdde3b860fdee09:process/ClimateMarble_with_fortran.py
 
 # Parameters (need to set)
 # Spatial resolution, number of channels, and maximum VZA
@@ -114,7 +89,6 @@ def main(mod02, mod03, output_folder):
             continue
 
 
-<<<<<<< HEAD:process/_1_daily/ClimateMarble_with_fortran.py
         # Calculate spectral radiances and insolation using:
         #          reflected_radiance = (scaled_integer - rad_offset) * rad_scale
         #          insolation = cos(sza) * rad_scale / ref_scale
@@ -125,19 +99,6 @@ def main(mod02, mod03, output_folder):
         rad_offset = mod02['{}/Radiance_Offsets'.format(itime)][:]
         ref_scales = mod02['{}/Reflectance_Scales'.format(itime)][:]
         ref_offset = mod02['{}/Reflectance_Offsets'.format(itime)][:]
-=======
-        # Calculate spectral radiances and insolation
-        try:
-            mdata = mod02['{}/Scaled_Integers'.format(itime)][:]
-            rad_scales = mod02['{}/Radiance_Scales'.format(itime)][:]
-            rad_offset = mod02['{}/Radiance_Offsets'.format(itime)][:]
-            ref_scales = mod02['{}/Reflectance_Scales'.format(itime)][:]
-            ref_offset = mod02['{}/Reflectance_Offsets'.format(itime)][:]
-        except KeyError as err:
-            print ">> KeyError, cannot access {}.{}".format(mod_date, itime)
-            continue
-            
->>>>>>> b4c8091d86d7f41d7c119fd37fdde3b860fdee09:process/ClimateMarble_with_fortran.py
         coeffs = rad_scales / ref_scales
         cosine_sza = np.cos(np.deg2rad(sza))
 
