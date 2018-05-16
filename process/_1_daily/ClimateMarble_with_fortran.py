@@ -8,8 +8,8 @@
 from my_module import os, h5py, np, sys, tqdm
 from my_module.data.comm import save_data_hdf5
 from helper_func import latslons_to_idxs
-from fort import sort
-
+#from fort import sort
+from sample2grid_sw import sort
 
 
 
@@ -132,13 +132,10 @@ def main(mod02, mod03, output_folder):
 
         # Call main fortran subroutine to sort granule samples into lat/lon grids.
         # Get daily_insolation_sum, daily_radiance_sum, daily_radiance_num
-        daily_insolation_sum, daily_radiance_sum, daily_radiance_num = sort
-        (
-            valid_num, valid_x, valid_y, \
+        daily_insolation_sum, daily_radiance_sum, daily_radiance_num = sort(NUM_CHAN, valid_num, valid_x, valid_y, \
             len(lats_idx), lats, lons, lats_idx, lons_idx, \
             rads, sols, rads_max, \
-            daily_insolation_sum, daily_radiance_sum, daily_radiance_num
-        )
+            daily_insolation_sum, daily_radiance_sum, daily_radiance_num)
 
         
     """
@@ -181,7 +178,7 @@ if __name__ == '__main__':
     # mod02 = '/u/sciteam/smzyz/scratch/data/MODIS/MOD02_VIS_daily/2006/MOD021KM.A2006001.006.h5'
     mod02 = '/u/sciteam/smzyz/scratch/data/MODIS/MOD02_SWIR_daily/2006/MOD021KM.A2006001.006.h5'
     output_folder = '/u/sciteam/smzyz'
-
+    main(mod02, mod03, output_folder)
 
 
 
