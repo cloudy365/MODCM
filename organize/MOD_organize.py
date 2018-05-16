@@ -104,6 +104,54 @@ def MOD03_organize(mod03_files, h5f_path):
         save_data_hdf5(h5f_path, os.path.join(data_path, 'SensorZenith'), vza)
         
         
+        
+
+def MOD35_organize(mod35_files, h5f_path):
+
+    for ifile in mod35_files[:]:
+        if ifile.endswith('.hdf') == False:
+            continue
+    
+        
+        # Get data
+        try:
+            mfile = SD(os.path.join(SUBDIR, ifile))
+        except Exception as err:
+            print ">> err: {} | {}".format(err, ifile)
+            continue
+        qa = np.array(mfile.select('Quality_Assurance')[:], dtype='int8')
+        mdata = np.rollaxis(np.array(mfile.select('Cloud_Mask')[:], dtype='int8'), 0, 3)
+        flg = mdata[:, :, 1:]
+        cld = []
+        tmp = mdata[:, :, 0]%2
+        cld.append(tmp)
+        tmp = mdata[:, :, 0]/2%4
+        cld.append(tmp)
+        tmp = mdata[:, :, 0]/8%2
+        cld.append(tmp)
+        tmp = mdata[:, :, 0]/16%2
+        cld.append(tmp)
+        tmp = mdata[:, :, 0]/32%2
+        cld.append(tmp)
+        tmp = mdata[:, :, 0]/64%4
+        cld.append(tmp)
+        cld = np.rollaxis(np.array(cld), 0, 3)
+        
+        np.place(cld[:, :, 1], cld[:, :, 1]==1, 4)
+        np.place(cld[:, :, 1], cld[:, :, 1]==2, 1)
+        np.place(cld[:, :, 1], cld[:, :, 1]==4, 2)
+        np.place(cld[:, :, 5], cld[:, :, 5]==1, 4)
+        np.place(cld[:, :, 5], cld[:, :, 5]==2, 1)
+        np.place(cld[:, :, 5], cld[:, :, 5]==4, 2)
+        
+        
+        # Save data
+        data_path = ifile.split('.')[2]
+        
+        save_data_hdf5(h5f_path, os.path.join(data_path, 'Cloud_Mask'), cld)
+        save_data_hdf5(h5f_path, os.path.join(data_path, 'Test_Flags'), flg)
+        save_data_hdf5(h5f_path, os.path.join(data_path, 'Quality_Assurance'), qa)        
+
 
 if __name__ == "__main__":
 
@@ -118,33 +166,43 @@ if __name__ == "__main__":
 
 
     # Main iterations
-    for iyr in range(2000, 2016):
-        for iday in range(1, 367, NUM_CORES):
+    for iyr in range(2015, 2016):
+        for iday in range(100, 367, NUM_CORES):
 
             WORKING_DATE = "{}/{}".format(iyr, str(iday+comm_rank).zfill(3))  # specified date
             # WORKING_DATE = "{}/186".format(iyr+comm_rank)
             # WORKING_DIR = "/u/sciteam/smzyz/scratch/data/MODIS/MOD03"       # path of MOD03 data
-            WORKING_DIR = "/u/sciteam/smzyz/scratch/data/MODIS/MOD021KM"      # path of MOD021KM data
+            # WORKING_DIR = "/u/sciteam/smzyz/scratch/data/MODIS/MOD021KM"      # path of MOD021KM data
+            WORKING_DIR = "/u/sciteam/smzyz/scratch/data/MODIS/MOD35"      # path of MOD35 data
+            
+            
             SUBDIR = os.path.join(WORKING_DIR, WORKING_DATE)                  # SUBDIR = WORKING_DIR + WORKING_DATE
-          
-
             # ignore unavailable date (not exists)
             try:
                 files = os.listdir( SUBDIR )
             except OSError as err:
                 print ">> err: {}".format(err)
                 continue
-            
+
+            data_files = [i for i in files if (i.endswith('.hdf')&(i.startswith('MOD')))]
+            if len(data_files) == 0:
+                continue
+
 
             # call main function
             print ">> PE:{}, organizing MODIS data on {}...".format(comm_rank, WORKING_DATE)
+            
+            
             h5f_name = '.'.join(files[0].split('.')[:2])                     # output hdf5 file name
-
             # h5f_path = '/u/sciteam/smzyz/scratch/data/MODIS/MOD03_daily/{}/{}.006.h5'.format(iyr, h5f_name)
-            h5f_path = '/u/sciteam/smzyz/scratch/data/MODIS/MOD02_LW_daily/{}/{}.006.h5'.format(iyr, h5f_name)
+            # h5f_path = '/u/sciteam/smzyz/scratch/data/MODIS/MOD02_LW_daily/{}/{}.006.h5'.format(iyr, h5f_name)
+            h5f_path = '/u/sciteam/smzyz/scratch/data/MODIS/MOD35_daily/{}/{}.061.h5'.format(iyr, h5f_name)
             # h5f_path = '/u/sciteam/smzyz/{}.006.h5'.format(h5f_name)
 
+            
+            
             # MOD03_organize(files, h5f_path)
-            MOD021KM_organize(files, h5f_path)
+            # MOD021KM_organize(files, h5f_path)
+            MOD35_organize(files, h5f_path)
             
 
