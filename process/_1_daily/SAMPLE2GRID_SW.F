@@ -3,51 +3,54 @@ C USEAGE:
 C       f2py -m sample2grid_sw -c SAMPLE2GRID_SW.F
 C TO GENERATE PYTHON USABLE .SO FILE
 
-       SUBROUTINE SORT(N, VALID_X, VALID_Y,
-     & N_1, LATS, LONS, LATS_IDX, LONS_IDX, 
+       SUBROUTINE SORT(NUM_CHANNEL, NUM_SAMPLE, VALID_X, VALID_Y,
+     & NUM_LINE, LATS, LONS, IDX_LATS, IDX_LONS, 
      & RADS, SOLS, RADS_MAX,
      & CUMU_INSOL, CUMU_RAD, CUMU_NUM,
-     & INSOL_SUM, RADIANCE_SUM, NUM_SUM)
+     & SUM_INSOL, SUM_RADIANCE, SUM_NUM)
 
 
-C     NUMBER OF VALID SAMPLE (N) AND CORRESPONDING INDEXES
-      INTEGER N
-      INTEGER, DIMENSION(N) :: VALID_X, VALID_Y
+C     NUMBER OF VALID SAMPLE (NUM_SAMPLE) AND CORRESPONDING INDEXES (VALID_X, VALID_Y)
+C     NUMBER OF CHANNELS (NUM_CHANNEL)
+      INTEGER NUM_SAMPLE, NUM_CHANNEL
+      INTEGER, DIMENSION(NUM_SAMPLE) :: VALID_X, VALID_Y
 
 
-C     NUMBER OF IMAGE HEIGHT AND CORRESPONDING LAT/LON (INDEXES)
-      INTEGER N_1
-      REAL, DIMENSION(N_1, 1354) :: LATS, LONS, LATS_IDX, LONS_IDX
+C     NUMBER OF IMAGE LINES AND CORRESPONDING LAT/LON (INDEXES)
+      INTEGER NUM_LINE
+      REAL, DIMENSION(NUM_LINE, 1354) :: LATS, LONS, IDX_LATS, IDX_LONS
 
 
 C     GRANULE RADIANCE DATA
-      REAL, DIMENSION(N_1, 1354, 7) :: RADS, SOLS
-      REAL, DIMENSION(7) :: RADS_MAX
+      REAL, DIMENSION(NUM_LINE, 1354, NUM_CHANNEL) :: RADS, SOLS
+      REAL, DIMENSION(NUM_CHANNEL) :: RADS_MAX
 
 
 C     DAILY RADIANCE DATA
-      REAL, DIMENSION(3600, 7200, 7) :: CUMU_INSOL, CUMU_RAD
-      INTEGER, DIMENSION(3600, 7200, 7) :: CUMU_NUM
+      REAL, DIMENSION(3600, 7200, NUM_CHANNEL) :: CUMU_INSOL, CUMU_RAD
+      INTEGER(4), DIMENSION(3600, 7200, NUM_CHANNEL) :: CUMU_NUM
 
 
 C     OUTPUT ARRAY
-      REAL, DIMENSION(3600, 7200, 7) :: INSOL_SUM, RADIANCE_SUM
-      INTEGER, DIMENSION(3600, 7200, 7) :: NUM_SUM
+      REAL, DIMENSION(3600, 7200, NUM_CHANNEL) :: SUM_INSOL, SUM_RADIANCE
+      INTEGER(4), DIMENSION(3600, 7200, NUM_CHANNEL) :: SUM_NUM
 
 
 C     INTERNAL USE INDEXES
       INTEGER ISAMPLE, I, J, IDX_X, IDX_Y, ICHANNEL
       REAL ILAT, ILON, ILAT_PRE
-      REAL, DIMENSION(7) :: IRAD, ISOL, INUM=0
+      REAL, DIMENSION(NUM_CHANNEL) :: IRAD, ISOL, INUM=0
 
 
-Cf2py intent(in) n, n_1
+Cf2py intent(in) num_channel, num_sample, num_line
 Cf2py intent(in) valid_x, valid_y 
-Cf2py intent(in) lats, lons, lats_idx, lons_idx
+Cf2py intent(in) lats, lons, idx_lats, idx_lons
 Cf2py intent(in) rads, sols, rads_max
 Cf2py intent(in) cumu_insol, cumu_rad, cumu_num
-Cf2py depend(n) valid_x, valid_y
-Cf2py depend(n_1) lats, lons, lats_idx, lons_idx, rads, sols
+Cf2py depend(num_sample) valid_x, valid_y
+Cf2py depend(num_line) lats, lons, idx_lats, idx_lons, rads, sols
+Cf2py depend(num_channel) rads, sols, rads_max, cumu_insol, cumu_rad, cumu_num
+     & sum_insol, sum_radiance, sum_num
 Cf2py intent(out) insol_sum, radiance_sum, num_sum
 
 

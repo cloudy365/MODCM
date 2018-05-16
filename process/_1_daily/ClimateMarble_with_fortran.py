@@ -5,7 +5,7 @@
 #
 
 
-from my_module import os, h5py, np, sys
+from my_module import os, h5py, np, sys, tqdm
 from my_module.data.comm import save_data_hdf5
 from helper_func import latslons_to_idxs
 from fort import sort
