@@ -27,7 +27,7 @@ def climatology_daily_mean(icat, iday):
     """
     working_dir = "/u/sciteam/smzyz/scratch/results/MODIS_ClimateMarble_005deg/daily/"
     output_dir = "/u/sciteam/smzyz/scratch/results/MODIS_ClimateMarble_005deg/tmp_daily_mean/"
-    output_file = os.path.join(output_dir, "{}_{}.npz".format(icat, str(iday).zfill(3)))
+    output_file = os.path.join(output_dir, "{}_{}.h5".format(icat, str(iday).zfill(3)))
 
     # Iterates each month and collect available monthly mean results of the specified category.
     # for iday in tqdm(range(1, 367), miniters=1):
@@ -50,6 +50,7 @@ def climatology_daily_mean(icat, iday):
 
         except Exception as err:
             print ">> Error: {}".format(err)
+            continue
 
     mean_rad = np.array(radiance_all / num_all)
     mean_sol = np.array(insolation_all / num_all)
@@ -178,7 +179,7 @@ if __name__ == '__main__':
     
     for i in range(1, 367, NUM_CORES):
         iday = comm_rank + i
-        # climatology_daily_mean('vis', iday)
-
         print ">> PE: {}, working on day_{}.".format(comm_rank, iday)
+        climatology_daily_mean('vis', iday)
+
         
