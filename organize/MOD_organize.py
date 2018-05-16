@@ -166,8 +166,8 @@ if __name__ == "__main__":
 
 
     # Main iterations
-    for iyr in range(2015, 2016):
-        for iday in range(100, 367, NUM_CORES):
+    for iyr in range(2014, 2015):
+        for iday in range(0, 367, NUM_CORES):
 
             WORKING_DATE = "{}/{}".format(iyr, str(iday+comm_rank).zfill(3))  # specified date
             # WORKING_DATE = "{}/186".format(iyr+comm_rank)
