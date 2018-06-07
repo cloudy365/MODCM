@@ -2,6 +2,10 @@
 """
 2018.04.30
 Combine MOD021KM and MOD03 organize scripts.
+2018.05.25
+Find a bug in the MOD35 function. Probably cloudy should be probably clear.
+2018.05.29
+Tidy up the __main__ function.
 """
 
 
@@ -104,8 +108,6 @@ def MOD03_organize(mod03_files, h5f_path):
         save_data_hdf5(h5f_path, os.path.join(data_path, 'SensorZenith'), vza)
         
         
-        
-
 def MOD35_organize(mod35_files, h5f_path):
 
     for ifile in mod35_files[:]:
@@ -137,12 +139,17 @@ def MOD35_organize(mod35_files, h5f_path):
         cld.append(tmp)
         cld = np.rollaxis(np.array(cld), 0, 3)
         
-        np.place(cld[:, :, 1], cld[:, :, 1]==1, 4)
-        np.place(cld[:, :, 1], cld[:, :, 1]==2, 1)
-        np.place(cld[:, :, 1], cld[:, :, 1]==4, 2)
-        np.place(cld[:, :, 5], cld[:, :, 5]==1, 4)
-        np.place(cld[:, :, 5], cld[:, :, 5]==2, 1)
-        np.place(cld[:, :, 5], cld[:, :, 5]==4, 2)
+        
+        # =============================================================================
+        # I may originally make a stupid mistake here, resulting in the suspicious high
+        # cloud fraction over the sun glint region.
+        # =============================================================================
+        # np.place(cld[:, :, 1], cld[:, :, 1]==1, 4)
+        # np.place(cld[:, :, 1], cld[:, :, 1]==2, 1)
+        # np.place(cld[:, :, 1], cld[:, :, 1]==4, 2)
+        # np.place(cld[:, :, 5], cld[:, :, 5]==1, 4)
+        # np.place(cld[:, :, 5], cld[:, :, 5]==2, 1)
+        # np.place(cld[:, :, 5], cld[:, :, 5]==4, 2)
         
         
         # Save data
@@ -152,31 +159,63 @@ def MOD35_organize(mod35_files, h5f_path):
         save_data_hdf5(h5f_path, os.path.join(data_path, 'Test_Flags'), flg)
         save_data_hdf5(h5f_path, os.path.join(data_path, 'Quality_Assurance'), qa)        
 
+        
+        
+        
+        
+
+        
 
 if __name__ == "__main__":
 
+    # Specify MODIS product
+    #          MOD02  MOD03  MOD35
+    product = [False, False, True]
+    
+    
+    
+    
+    if product[0]:
+        WORKING_DIR = "/u/sciteam/smzyz/scratch/data/MODIS/MOD021KM"
+        h5f_path_string = '/u/sciteam/smzyz/scratch/data/MODIS/MOD02_LW_daily/{}.006.h5'
+        main = MOD021KM_organize
+    elif product[1]:
+        WORKING_DIR = "/u/sciteam/smzyz/scratch/data/MODIS/MOD03"
+        h5f_path_string = '/u/sciteam/smzyz/scratch/data/MODIS/MOD03_daily/{}.006.h5'
+        main = MOD03_organize
+    elif product[2]:
+        WORKING_DIR = "/u/sciteam/smzyz/scratch/data/MODIS/MOD35"
+        h5f_path_string = '/u/sciteam/smzyz/scratch/data/MODIS/MOD35_daily/{}.061.h5'
+        main = MOD35_organize
+        
+        
+        
+    
     # Get the number of available cores
     NUM_CORES = int(sys.argv[1])
 
+    
+    
+    
+    
 
     # Initialize MPI
     import mpi4py.MPI as MPI
     comm = MPI.COMM_WORLD
     comm_rank = comm.Get_rank()
 
+    
+    
+    
 
     # Main iterations
-    for iyr in range(2014, 2015):
-        for iday in range(0, 367, NUM_CORES):
+    for iyr in range(2000, 2016):
+        for iday in range(1, 367, NUM_CORES):
 
             WORKING_DATE = "{}/{}".format(iyr, str(iday+comm_rank).zfill(3))  # specified date
-            # WORKING_DATE = "{}/186".format(iyr+comm_rank)
-            # WORKING_DIR = "/u/sciteam/smzyz/scratch/data/MODIS/MOD03"       # path of MOD03 data
-            # WORKING_DIR = "/u/sciteam/smzyz/scratch/data/MODIS/MOD021KM"      # path of MOD021KM data
-            WORKING_DIR = "/u/sciteam/smzyz/scratch/data/MODIS/MOD35"      # path of MOD35 data
-            
-            
             SUBDIR = os.path.join(WORKING_DIR, WORKING_DATE)                  # SUBDIR = WORKING_DIR + WORKING_DATE
+            
+            
             # ignore unavailable date (not exists)
             try:
                 files = os.listdir( SUBDIR )
@@ -184,25 +223,23 @@ if __name__ == "__main__":
                 print ">> err: {}".format(err)
                 continue
 
+            
+            # ignore unavailable date (not data file inside)
             data_files = [i for i in files if (i.endswith('.hdf')&(i.startswith('MOD')))]
             if len(data_files) == 0:
                 continue
 
-
+            
+            # specify output file name
+            h5f_name = '.'.join(files[0].split('.')[:2])
+            h5f_path = h5f_path_string.format(h5f_name)
+            
+            
+            
+            
+            
             # call main function
             print ">> PE:{}, organizing MODIS data on {}...".format(comm_rank, WORKING_DATE)
-            
-            
-            h5f_name = '.'.join(files[0].split('.')[:2])                     # output hdf5 file name
-            # h5f_path = '/u/sciteam/smzyz/scratch/data/MODIS/MOD03_daily/{}/{}.006.h5'.format(iyr, h5f_name)
-            # h5f_path = '/u/sciteam/smzyz/scratch/data/MODIS/MOD02_LW_daily/{}/{}.006.h5'.format(iyr, h5f_name)
-            h5f_path = '/u/sciteam/smzyz/scratch/data/MODIS/MOD35_daily/{}/{}.061.h5'.format(iyr, h5f_name)
-            # h5f_path = '/u/sciteam/smzyz/{}.006.h5'.format(h5f_name)
-
-            
-            
-            # MOD03_organize(files, h5f_path)
-            # MOD021KM_organize(files, h5f_path)
-            MOD35_organize(files, h5f_path)
+            main(files, h5f_path)
             
 

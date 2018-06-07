@@ -196,33 +196,3 @@ def MOD02_retrieve_rads(mod02_file, icat):
     mod_array = np.rollaxis(np.array(mod_array), 0, 3)
     return mod_array, max_value
   
-    
-    
-#if __name__ == "__main__":
-#    import sys
-#
-#    yrs = sys.argv[1:]
-#    
-#    for iyr in yrs:
-#        data_folder = "/u/sciteam/smzyz/scratch/results/VIS/{}".format(iyr)
-#    
-#        rad_all = np.zeros((3600, 7200, 7))
-#        num_all = np.zeros((3600, 7200, 7))
-#    
-#        files = os.listdir(data_folder)
-#        length = len(files)
-#    
-#        for i in tqdm(range(length), miniters=10):
-#            ifile = files[i]
-#        
-#            if ifile.endswith('.npz') == False:
-#                continue
-#        
-#            fnpz = np.load(os.path.join(data_folder, ifile))
-#            tmp_rad = fnpz['rad_sum'][:]
-#            tmp_num = fnpz['rad_num'][:]
-#        
-#            rad_all += tmp_rad
-#            num_all += tmp_num
-#
-#        np.savez(iyr, rad_all=rad_all, num_all=num_all)

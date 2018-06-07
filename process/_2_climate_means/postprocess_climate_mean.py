@@ -9,12 +9,81 @@
 #
 
 
-from my_module import np, os, Dataset, h5py, sys
+from my_module import np, os, Dataset, h5py, sys, tqdm
 from my_module.data.comm import save_data_hdf5
 
 
+
+
+
+        
+def daily2monthly_mean(icat, iyr, imon):
+    """
+    As described in the function name, this function is used to generate 
+    """
+    
+    
+    doy_normal = [1, 1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335, 366]
+    doy_leap = [1, 1, 32, 61, 92, 122, 153, 183, 214, 245, 275, 306, 336, 367]
+    
+    data_folder = "/u/sciteam/smzyz/scratch/results/MODIS_ClimateMarble_005deg/daily/{}/{}".format(icat, iyr)
+    data_files = os.listdir(data_folder)
+    output_dir = "/u/sciteam/smzyz/scratch/results/MODIS_ClimateMarble_005deg/monthly/"
+    output_file = os.path.join(output_dir, "{}_{}_{}.h5".format(icat, iyr, str(imon).zfill(2)))
+    
+    
+    if iyr in [2000, 2004, 2008, 2012]:
+        doy = doy_leap
+    else:
+        doy = doy_normal
+    
+    
+    print ">> work on {}.{}".format(iyr, imon)
+    if icat in ['vis']:
+        radiance_all = np.zeros((3600, 7200, 7))
+        insolation_all = np.zeros((3600, 7200, 7))
+        num_all = np.zeros((3600, 7200, 7))
+    else:
+        print ">> err: only supports visible bands right now."
+        return
         
         
+    doy_0 = doy[imon]
+    doy_1 = doy[imon+1]
+    
+    
+    for ifile in data_files:
+        iday = int(ifile.split('.')[0][-3:]) # Example: ifile --> A2000265.h5
+        
+        if iday in range(doy_0, doy_1):
+            ifile = os.path.join(data_folder, ifile)
+            
+            try:
+                with h5py.File(ifile, 'r') as h5f:
+                    solar = h5f['insolation_sum'][:]
+                    rad = h5f['radiance_sum'][:]
+                    num = h5f['radiance_num'][:]
+                
+                
+                insolation_all = insolation_all + solar
+                radiance_all = radiance_all + rad
+                num_all = num_all + num
+            except Exception as err:
+                print ">> err: {}".format(err)
+                continue
+
+                
+    mean_rad = np.array(radiance_all / num_all)
+    mean_sol = np.array(insolation_all / num_all)
+    
+    save_data_hdf5(output_file, 'monthly_radiance', mean_rad)
+    save_data_hdf5(output_file, 'monthly_insolation', mean_sol)
+    save_data_hdf5(output_file, 'monthly_number', num_all)    
+    
+    
+    
+    
+    
 def climatology_daily_mean(icat, iday):
     """
     ---------
@@ -25,13 +94,16 @@ def climatology_daily_mean(icat, iday):
     Updated: 2018.05.16
     ---------
     """
+    
+    str_iday = str(iday).zfill(3)
+
+
+    # Initialize daily data folder and output file path
     working_dir = "/u/sciteam/smzyz/scratch/results/MODIS_ClimateMarble_005deg/daily/"
-    output_dir = "/u/sciteam/smzyz/scratch/results/MODIS_ClimateMarble_005deg/tmp_daily_mean/"
-    output_file = os.path.join(output_dir, "{}_{}.h5".format(icat, str(iday).zfill(3)))
+    output_file = "/u/sciteam/smzyz/scratch/results/MODIS_ClimateMarble_005deg/daily_mean/{}_{}.h5".format(icat, str_iday)
 
-    # Iterates each month and collect available monthly mean results of the specified category.
-    # for iday in tqdm(range(1, 367), miniters=1):
 
+    # Initialize three temporal arrays used to store 16 years' daily data
     if icat in ['vis']:
         radiance_all = np.zeros((3600, 7200, 7))
         insolation_all = np.zeros((3600, 7200, 7))
@@ -40,16 +112,20 @@ def climatology_daily_mean(icat, iday):
         print ">> err: only supports visible bands right now."
         return
 
+
+    # Iterates each year and collect available daily data of the specified category.
     for iyr in range(2000, 2016):
-        ifile = "A{}{}.h5".format(iyr, str(iday).zfill(3))
+        ifile = "A{}{}.h5".format(iyr, str_iday)
+        ifile_path = os.path.join(working_dir + "{}/{}".format(icat, iyr), ifile)
+        
         try:
-            h5f = h5py.File(os.path.join(working_dir+"{}/{}".format(icat, iyr), ifile), 'r')
+            h5f = h5py.File(ifile_path, 'r')
             insolation_all += h5f['insolation_sum'][:]
             radiance_all += h5f['radiance_sum'][:]
             num_all += h5f['radiance_num'][:]
 
         except Exception as err:
-            print ">> Error: {}".format(err)
+            print ">> err: {}".format(err)
             continue
 
     mean_rad = np.array(radiance_all / num_all)
@@ -58,7 +134,7 @@ def climatology_daily_mean(icat, iday):
 
     save_data_hdf5(output_file, 'climatoglogy_daily_radiance', mean_rad)
     save_data_hdf5(output_file, 'climatoglogy_daily_insolation', mean_sol)
-
+    save_data_hdf5(output_file, 'climatoglogy_daily_number', num_all)
 
 
 
@@ -75,6 +151,7 @@ def climatology_daily_mean(icat, iday):
 #     """
 #     working_dir = "/u/sciteam/smzyz/scratch/results/MODIS_ClimateMarble_005deg/monthly/"
 #     output_dir = "/u/sciteam/smzyz/"
+
 #     output_file = os.path.join(output_dir, "{}_{}.npz".format(icat, str(iday).zfill(3)))
 
 
@@ -98,6 +175,7 @@ def climatology_daily_mean(icat, iday):
         
 #             mean_rad = np.array(rad_all / num_all)
 #             np.savez_compressed(os.path.join(output_dir, "{}_{}.npz".format(icat, imon)), mean_rad = mean_rad)
+
 
 
 # def monthly_mean_rewrite_netCDF4(icat):
@@ -168,18 +246,66 @@ def climatology_daily_mean(icat, iday):
       
         
         
-        
+
+
+
 if __name__ == '__main__':
-
-    NUM_CORES = int(sys.argv[1])
-
-    import mpi4py.MPI as MPI
-    comm = MPI.COMM_WORLD
-    comm_rank = comm.Get_rank()
     
-    for i in range(1, 367, NUM_CORES):
-        iday = comm_rank + i
-        print ">> PE: {}, working on day_{}.".format(comm_rank, iday)
-        climatology_daily_mean('vis', iday)
+    # 2018.06.06
+    # modify script to receive up to 2 arguments, the first argument could be:
+    # 0) test -- for single PE functional test
+    # 1) clim_daily -- calculate climatology daily mean radiances from gridded daily mean radiances;
+    # 2) monthly -- calculate monthly mean radiances from gridded daily mean radiances;
+    # 3) clim_monthly -- calculate climatology monthly mean radiances from monthly mean radiances;
+    #
+    # the second argument is the number of PE used to process, if the first argument is test, this argument can be omitted. 
 
+    
+    if sys.argv[1] == 'test':
+        # do some test jobs here
         
+        climatology_daily_mean('vis', 1)
+
+
+    elif sys.argv[1] in ['clim_daily', 'monthly', 'clim_monthly']:
+        # do some batch jobs here
+
+        NUM_CORES = int(sys.argv[2])
+        
+        import mpi4py.MPI as MPI
+        comm = MPI.COMM_WORLD
+        comm_rank = comm.Get_rank()
+    
+        if sys.argv[1] == 'clim_daily':
+            for i in range(1, 367, NUM_CORES):
+                iday = comm_rank + i
+                
+                print ">> PE: {}, working on day_{}.".format(comm_rank, iday)
+                climatology_daily_mean('vis', iday)
+        
+
+        elif sys.argv[1] == 'monthly':
+            times = []
+            for iyr in range(2000, 2016):
+                for imon in range(1, 13):
+                    times.append("{}{}".format(iyr, str(imon).zfill(2)))
+
+            for i in range(1, len(times), NUM_CORES):
+                iyr_mon = comm_rank + i
+
+                print ">> PE: {}, working on day_{}.".format(comm_rank, iyr_mon)
+                daily2monthly_mean('vis', int(iyr_mon[:4]), int(iyr_mon[4:]))
+        
+
+        elif sys.argv[1] == 'clim_monthly':
+            # for future purpose
+            print ">> function has not implemented yet."
+
+
+
+    else:
+        print ">> {} is not a valid argument, please check it.".format(sys.argv[1])
+
+
+
+
